@@ -112,7 +112,7 @@ end)
 
 -- Toggle with G key
 UserInputService.InputBegan:Connect(function(Input)
-    if Input.KeyCode == Enum.KeyCode.G then
+    if Input.KeyCode == Enum.KeyCode.Alt then
         AimEnabled = not AimEnabled
         FOVCircle.Visible = FOVVisible and AimEnabled
         print("Aimbot " .. (AimEnabled and "ENABLED" and "🔴" or "DISABLED" and "⚫"))
