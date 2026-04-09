@@ -10,7 +10,7 @@ local Mouse = LocalPlayer:GetMouse()
 
 local AimEnabled = true
 local FOV = 40 -- Field of View in degrees
-local Smoothing = 0.08 -- Stronger aim (lower = faster/snappier)
+local Smoothing = 1-- Stronger aim (lower = faster/snappier)
 local AimPart = "Head" -- Always aim for head
 local FOVVisible = true -- Show FOV circle
 
