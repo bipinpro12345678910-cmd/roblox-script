@@ -1,4 +1,4 @@
--- BIPIN_GOOD Enhanced Cam Lock / Aimbot with Distance Slider + ESP
+-- BIPIN_GOOD Enhanced Cam Lock / Aimbot with Distance Slider + ESP (Fixed)
 -- Hold Right Click to Aim | Right Alt to Toggle Aimbot + GUI | F to toggle FOV Circle
 
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local AimEnabled = true
 local GUIEnabled = true
 local FOV = 40
 local MaxDistance = 500
-local Smoothing = 0.15
+local Smoothing = 0.25          -- Slightly increased for smoother feel
 local AimPart = "Head"
 local FOVVisible = true
 
@@ -22,9 +22,8 @@ FOVCircle.Thickness = 2
 FOVCircle.Color = Color3.fromRGB(255, 50, 50)
 FOVCircle.Transparency = 0.4
 FOVCircle.Filled = false
-FOVCircle.Radius = math.tan(math.rad(FOV)/2) * (Camera.ViewportSize.Y / 2)
 
--- Simple Draggable GUI
+-- GUI (unchanged except minor positioning)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
@@ -45,7 +44,6 @@ Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 18
 
--- Distance Label
 local DistLabel = Instance.new("TextLabel", Frame)
 DistLabel.Size = UDim2.new(1, 0, 0, 20)
 DistLabel.Position = UDim2.new(0, 0, 0, 45)
@@ -54,19 +52,14 @@ DistLabel.Text = "Max Aim Distance: " .. MaxDistance .. " studs"
 DistLabel.TextColor3 = Color3.new(1,1,1)
 DistLabel.TextSize = 14
 
--- Distance Slider
 local DistanceSlider = Instance.new("TextButton", Frame)
 DistanceSlider.Size = UDim2.new(0.9, 0, 0, 25)
 DistanceSlider.Position = UDim2.new(0.05, 0, 0, 70)
 DistanceSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 DistanceSlider.Text = ""
-DistanceSlider.TextColor3 = Color3.new(1,1,1)
 
 local dragging = false
-
-DistanceSlider.MouseButton1Down:Connect(function()
-   dragging = true
-end)
+DistanceSlider.MouseButton1Down:Connect(function() dragging = true end)
 
 UserInputService.InputEnded:Connect(function(input)
    if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -79,20 +72,17 @@ RunService.RenderStepped:Connect(function()
       local mouseX = Mouse.X
       local sliderX = DistanceSlider.AbsolutePosition.X
       local sliderWidth = DistanceSlider.AbsoluteSize.X
-      
       local percent = math.clamp((mouseX - sliderX) / sliderWidth, 0, 1)
-      MaxDistance = math.floor(100 + percent * 900) -- 100 to 1000 studs
-      
+      MaxDistance = math.floor(100 + percent * 900)
       DistLabel.Text = "Max Aim Distance: " .. MaxDistance .. " studs"
    end
 end)
 
--- ESP Table
+-- ESP (unchanged)
 local ESP = {}
 
 local function CreateESP(Player)
    if Player == LocalPlayer then return end
-   
    local Billboard = Instance.new("BillboardGui")
    Billboard.Adornee = nil
    Billboard.Size = UDim2.new(0, 200, 0, 60)
@@ -100,8 +90,7 @@ local function CreateESP(Player)
    Billboard.AlwaysOnTop = true
    Billboard.LightInfluence = 0
    Billboard.Enabled = true
-   
-   -- Name Label
+
    local NameLabel = Instance.new("TextLabel", Billboard)
    NameLabel.Size = UDim2.new(1, 0, 0.5, 0)
    NameLabel.BackgroundTransparency = 1
@@ -110,33 +99,26 @@ local function CreateESP(Player)
    NameLabel.TextStrokeTransparency = 0.5
    NameLabel.Font = Enum.Font.SourceSansBold
    NameLabel.TextSize = 16
-   
-   -- Avatar (Headshot)
+
    local Avatar = Instance.new("ImageLabel", Billboard)
    Avatar.Size = UDim2.new(0, 40, 0, 40)
    Avatar.Position = UDim2.new(0.5, -20, 0.5, 0)
    Avatar.BackgroundTransparency = 1
    Avatar.Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-   
+
    ESP[Player] = Billboard
 end
 
--- Update ESP
 local function UpdateESP()
    for _, Player in pairs(Players:GetPlayers()) do
       if Player ~= LocalPlayer and Player.Character then
          local Humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
          local RootPart = Player.Character:FindFirstChild("HumanoidRootPart")
-         
          if Humanoid and Humanoid.Health > 0 and RootPart then
-            local Dist = (RootPart.Position - Camera.CFrame.Position).Magnitude
-            if not ESP[Player] then
-               CreateESP(Player)
-            end
-            
+            if not ESP[Player] then CreateESP(Player) end
             local Billboard = ESP[Player]
             Billboard.Adornee = RootPart
-            Billboard.Enabled = GUIEnabled and AimEnabled  -- Show ESP only when aimbot + gui is on
+            Billboard.Enabled = GUIEnabled and AimEnabled
          elseif ESP[Player] then
             ESP[Player].Enabled = false
          end
@@ -146,11 +128,11 @@ end
 
 -- Get Best Target
 local function GetBestTarget()
-   if not LocalPlayer.Character then return nil end
-   
+   if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
+
    local BestTarget = nil
    local BestAngle = math.rad(FOV)
-   
+
    for _, Player in pairs(Players:GetPlayers()) do
       if Player ~= LocalPlayer and Player.Character then
          local Character = Player.Character
@@ -160,10 +142,10 @@ local function GetBestTarget()
             if TargetPart then
                local Dist = (TargetPart.Position - Camera.CFrame.Position).Magnitude
                if Dist > MaxDistance then continue end
-               
+
                local Direction = (TargetPart.Position - Camera.CFrame.Position).Unit
                local Angle = math.acos(Camera.CFrame.LookVector:Dot(Direction))
-               
+
                if Angle < BestAngle then
                   BestAngle = Angle
                   BestTarget = TargetPart
@@ -175,36 +157,55 @@ local function GetBestTarget()
    return BestTarget
 end
 
--- Aim Function
+-- Aim Function (with Scriptable camera)
+local LastCameraType = Camera.CameraType
 local function AimAt(Target)
    if not Target then return end
+
+   -- Switch to Scriptable when aiming
+   if Camera.CameraType ~= Enum.CameraType.Scriptable then
+      LastCameraType = Camera.CameraType
+      Camera.CameraType = Enum.CameraType.Scriptable
+   end
+
    local TargetPos = Target.Position
    local CurrentCFrame = Camera.CFrame
    local Direction = (TargetPos - CurrentCFrame.Position).Unit
    local Smoothed = CurrentCFrame.LookVector:Lerp(Direction, Smoothing)
-   
+
    Camera.CFrame = CFrame.new(CurrentCFrame.Position, CurrentCFrame.Position + Smoothed)
 end
 
--- Right Click Hold
+-- Reset camera when not aiming
+local function ResetCamera()
+   if Camera.CameraType == Enum.CameraType.Scriptable then
+      Camera.CameraType = LastCameraType or Enum.CameraType.Custom
+   end
+end
+
+-- Right Click
 local RightClickDown = false
 Mouse.Button2Down:Connect(function() RightClickDown = true end)
 Mouse.Button2Up:Connect(function() RightClickDown = false end)
 
--- Toggle Aimbot + GUI with Right Alt
+-- Toggle with Right Alt
 UserInputService.InputBegan:Connect(function(Input)
    if Input.KeyCode == Enum.KeyCode.RightAlt then
       AimEnabled = not AimEnabled
-      GUIEnabled = AimEnabled  -- GUI turns on/off with aimbot
-      
+      GUIEnabled = AimEnabled
+
       Frame.Visible = GUIEnabled
       FOVCircle.Visible = FOVVisible and AimEnabled
-      
+
+      if not AimEnabled then
+         ResetCamera()
+      end
+
       print("Aimbot " .. (AimEnabled and "ENABLED" or "DISABLED") .. " | GUI " .. (GUIEnabled and "ON" or "OFF"))
    end
 end)
 
--- Toggle FOV Circle with F
+-- Toggle FOV with F
 UserInputService.InputBegan:Connect(function(Input)
    if Input.KeyCode == Enum.KeyCode.F then
       FOVVisible = not FOVVisible
@@ -214,37 +215,37 @@ end)
 
 -- Main Loop
 RunService.RenderStepped:Connect(function()
-   -- Update FOV Circle
    local ScreenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
    FOVCircle.Position = ScreenCenter
    FOVCircle.Radius = math.tan(math.rad(FOV)/2) * (Camera.ViewportSize.Y / 2)
    FOVCircle.Visible = FOVVisible and AimEnabled
-   
-   -- Update ESP
+
    UpdateESP()
-   
-   -- Aiming Logic
+
    if AimEnabled and RightClickDown then
       local Target = GetBestTarget()
       if Target then
          AimAt(Target)
+      else
+         ResetCamera()
       end
+   else
+      ResetCamera()
    end
 end)
 
--- Initial ESP Creation
+-- Initial ESP
 for _, Player in pairs(Players:GetPlayers()) do
    CreateESP(Player)
 end
-
 Players.PlayerAdded:Connect(CreateESP)
 
 print("========================================")
-print("🎯 BIPIN_GOOD Cam Lock + ESP Loaded 🎯")
+print("🎯 BIPIN_GOOD Cam Lock + ESP (Fixed) 🎯")
 print("========================================")
 print("🖱️ Hold RIGHT CLICK to aim")
 print("🎮 RIGHT ALT = Toggle Aimbot + GUI")
 print("👁️ F = Toggle FOV Circle")
-print("📏 Distance Slider in GUI")
+print("📏 Distance Slider")
 print("👤 ESP: Name + Avatar")
 print("========================================")
