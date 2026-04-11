@@ -10,7 +10,7 @@ local Camera = workspace.CurrentCamera
 local AimEnabled = true
 local FOV = 40
 local MaxDistance = 500
-local Smoothing = 0.25          -- Increased a bit for less jitter (adjust 0.1-0.4)
+local Smoothing = 0.80-- Increased a bit for less jitter (adjust 0.1-0.4)
 local AimPart = "Head"
 local FOVVisible = true
 
