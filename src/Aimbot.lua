@@ -1,5 +1,5 @@
--- BIPIN_GOOD Final Combined Script - Cam Lock + ESP + Distance Changer
--- Hold Right Click = Aim Lock | Right Alt = Toggle Aimbot & ESP | F = FOV Circle
+-- BIPIN_GOOD Final Cam Lock + ESP + Distance Changer
+-- Hold Right Click = Aim | Right Ctrl = Toggle ESP | Drag Slider = Distance 1-1000
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -11,11 +11,11 @@ local Camera = workspace.CurrentCamera
 -- ================== SETTINGS ==================
 local AimEnabled = true
 local FOV = 40
-local MaxDistance = 500          -- Default distance (will be controlled by slider)
+local MaxDistance = 500
 local Smoothing = 0.15
 local AimPart = "Head"
 local FOVVisible = true
-local ESPEnabled = true          -- ESP starts ON
+local ESPEnabled = true
 
 -- FOV Circle
 local FOVCircle = Drawing.new("Circle")
@@ -68,7 +68,7 @@ local function CreateESP(player)
     end
    
     if player.Character then AddHighlight(player.Character) end
-    player.CharacterAdded:Connect(function(char) wait(0.5) AddHighlight(char) end)
+    player.CharacterAdded:Connect(function(char) task.wait(0.5) AddHighlight(char) end)
 end
 
 -- Update ESP
@@ -79,13 +79,12 @@ RunService.RenderStepped:Connect(function()
             local distance = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
             local health = player.Character:FindFirstChild("Humanoid") and math.floor(player.Character.Humanoid.Health) or "?"
            
-            local displayText = player.Name .. "\n[" .. math.floor(distance) .. " studs]\n♥ " .. health
-            data.Text.Text = displayText
+            data.Text.Text = player.Name .. "\n[" .. math.floor(distance) .. " studs]\n♥ " .. health
         end
     end
 end)
 
--- Create ESP for players
+-- Create ESP
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then CreateESP(player) end
 end
@@ -98,23 +97,29 @@ local RightClickDown = false
 Mouse.Button2Down:Connect(function() RightClickDown = true end)
 Mouse.Button2Up:Connect(function() RightClickDown = false end)
 
--- Right Alt = Toggle Aimbot + ESP
+-- Toggle Aimbot with Right Alt
 UserInputService.InputBegan:Connect(function(Input)
    if Input.KeyCode == Enum.KeyCode.RightAlt then
       AimEnabled = not AimEnabled
-      ESPEnabled = AimEnabled   -- Sync ESP with Aimbot for simplicity
-      
       FOVCircle.Visible = FOVVisible and AimEnabled
-      
-      for _, data in pairs(ESP) do
-         if data.Highlight then data.Highlight.Enabled = ESPEnabled end
-      end
-      
-      print("Aimbot & ESP " .. (AimEnabled and "ENABLED" or "DISABLED"))
+      print("Aimbot " .. (AimEnabled and "ENABLED" or "DISABLED"))
    end
 end)
 
--- Toggle FOV Circle with F
+-- Toggle ESP with Right Ctrl
+UserInputService.InputBegan:Connect(function(Input)
+   if Input.KeyCode == Enum.KeyCode.RightControl then
+      ESPEnabled = not ESPEnabled
+      for _, data in pairs(ESP) do
+         if data.Highlight then
+            data.Highlight.Enabled = ESPEnabled
+         end
+      end
+      print("ESP " .. (ESPEnabled and "ENABLED" or "DISABLED"))
+   end
+end)
+
+-- Toggle FOV with F
 UserInputService.InputBegan:Connect(function(Input)
    if Input.KeyCode == Enum.KeyCode.F then
       FOVVisible = not FOVVisible
@@ -122,7 +127,7 @@ UserInputService.InputBegan:Connect(function(Input)
    end
 end)
 
--- Get Best Target with Distance Limit
+-- Aim Logic
 local function GetBestTarget()
    if not LocalPlayer.Character then return nil end
    local BestTarget = nil
@@ -161,7 +166,6 @@ local function AimAt(Target)
    Camera.CFrame = CFrame.new(CurrentCFrame.Position, CurrentCFrame.Position + Smoothed)
 end
 
--- Main Loop
 RunService.RenderStepped:Connect(function()
    local ScreenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
    FOVCircle.Position = ScreenCenter
@@ -174,7 +178,7 @@ RunService.RenderStepped:Connect(function()
    end
 end)
 
--- ================== DISTANCE SLIDER GUI ==================
+-- ================== DISTANCE CHANGER GUI ==================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
@@ -207,7 +211,7 @@ local DistanceSlider = Instance.new("TextButton", Frame)
 DistanceSlider.Size = UDim2.new(0.9, 0, 0, 30)
 DistanceSlider.Position = UDim2.new(0.05, 0, 0, 80)
 DistanceSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-DistanceSlider.Text = "Drag here to change distance"
+DistanceSlider.Text = "← Drag Here to Change Distance →"
 
 local dragging = false
 DistanceSlider.MouseButton1Down:Connect(function() dragging = true end)
@@ -230,7 +234,8 @@ print("========================================")
 print("🎯 BIPIN_GOOD Final Script Loaded 🎯")
 print("========================================")
 print("🖱️ Hold RIGHT CLICK → Aim Lock")
-print("🎮 RIGHT ALT → Toggle Aimbot + ESP")
+print("🎮 RIGHT ALT → Toggle Aimbot")
+print("🔹 RIGHT CTRL → Toggle ESP")
 print("👁️ F → Toggle FOV Circle")
-print("📏 Drag slider → Change Distance (1-1000 studs)")
+print("📏 Drag the slider → Change Distance (1-1000 studs)")
 print("========================================")
