@@ -13,7 +13,7 @@ local Smoothing = 0.90
 local AimPart = "Head"
 local FOVVisible = true
 local AUTO_SHOOT = true
-local PREDICTION = 0.12
+local PREDICTION = 0.0
 
 -- ================== VARIABLES ==================
 local currentTarget = nil
